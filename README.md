@@ -11,7 +11,19 @@ dual simplex, which is the reason why Gurobi does not provide a network simplex.
 
 ## Usage 
 ```
-usage: ./run_mskmeans.py [data file] [k] [minimum size] [#iterations] [result file]
+usage: run_mskmeans.py [-h] [-n NUM_ITER] [-o OUTFILE] datafile k min_size
+
+positional arguments:
+  datafile              file containing the coordinates of instances
+  k                     number of clusters
+  min_size              minimum size of each cluster
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -n NUM_ITER, --NUM_ITER NUM_ITER
+                        run the algorithm for NUM_ITER times and return the best clustering
+  -o OUTFILE, --OUTFILE OUTFILE
+                        store the result in OUTFILE
 ```
 To see a run of algorithm on example data, run the script `example_run.sh` in `minsize_kmeans` directory.
 
@@ -27,9 +39,45 @@ arcs that enter the sink node.
 
 To run the algorithm with both minimum and maximum size constraints, use this command:
 ```
-usage: ./minmax_kmeans.py [data file] [k] [minimum size] [maximum size] [#iterations] [result file]
+usage: minmax_kmeans.py [-h] [-n NUM_ITER] [-o OUTFILE] datafile k min_size max_size
+
+positional arguments:
+  datafile              file containing the coordinates of instances
+  k                     number of clusters
+  min_size              minimum size of each cluster
+  max_size              maximum size of each cluster
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -n NUM_ITER, --NUM_ITER NUM_ITER
+                        run the algorithm for NUM_ITER times and return the best clustering
+  -o OUTFILE, --OUTFILE OUTFILE
+                        store the result in OUTFILE
 ```
 An example run is included in the script `example_run.sh` in `minsize_kmeans` directory.
+
+## Constrained K-Means with Weighted Instances
+Sometimes instead of the size of clusters, we want to constrain the total weight of instances that are in each cluster. Unfortunately, the subproblem for constrained k-means in this case will be __NP-complete__. However, we can still give this subproblem to a MIP solver and hope that it will be solved in a reasonable time. To run this algorithm, use this command:
+
+```
+usage: weighted_mm_kmeans.py [-h] [-n NUM_ITER] [-o OUTFILE]
+                             datafile k weightfile min_weight max_weight
+
+positional arguments:
+  datafile              file containing the coordinates of instances
+  k                     number of clusters
+  weightfile            file containing the weights of instances
+  min_weight            minimum total weight for each cluster
+  max_weight            maximum total weigth for each cluster
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -n NUM_ITER, --NUM_ITER NUM_ITER
+                        run the algorithm for NUM_ITER times and return the best clustering
+  -o OUTFILE, --OUTFILE OUTFILE
+                        store the result in OUTFILE
+```
+An example run is included in the script `example_weighted.sh` in `minsize_kmeans` directory.
 
 
 ## References
