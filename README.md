@@ -1,5 +1,5 @@
 # MinSizeKmeans
-A python implementation of KMeans clustering with minimum cluster size constraint (Bradley et al., 2000)[1](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-2000-65.pdf)
+A python implementation of KMeans clustering with minimum cluster size constraint (Bradley et al., 2000)[[1]](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-2000-65.pdf)
 
 ## Usage 
 ```
