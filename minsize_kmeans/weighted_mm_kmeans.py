@@ -9,12 +9,13 @@ def l2_distance(point1, point2):
     return sum([(float(i)-float(j))**2 for (i,j) in zip(point1, point2)])
 
 class subproblem(object):
-    def __init__(self, centroids, data, min_size, max_size):
+    def __init__(self, centroids, data, weights, min_weight, max_weight):
 
         self.centroids = centroids
         self.data = data
-        self.min_size = min_size
-        self.max_size= max_size
+        self.weights = weights
+        self.min_weight = min_weight
+        self.max_weight= max_weight
         self.n = len(data)
         self.k = len(centroids)
 
@@ -24,44 +25,25 @@ class subproblem(object):
         def distances(assignment):
             return l2_distance(self.data[assignment[0]], self.centroids[assignment[1]])
 
-        clusters = list(range(self.k))
         assignments = [(i, j)for i in range(self.n) for j in range(self.k)]
 
-        # outflow variables for data nodes
+        # assignment variables
         self.y = pulp.LpVariable.dicts('data-to-cluster assignments',
                                   assignments,
                                   lowBound=0,
                                   upBound=1,
                                   cat=pulp.LpInteger)
 
-        # outflow variables for cluster nodes
-        self.b = pulp.LpVariable.dicts('cluster outflows',
-                                  clusters,
-                                  lowBound=0,
-                                  upBound=self.n-self.min_size,
-                                  cat=pulp.LpContinuous)
-
         # create the model
         self.model = pulp.LpProblem("Model for assignment subproblem", pulp.LpMinimize)
 
         # objective function
         self.model += sum([distances(assignment) * self.y[assignment] for assignment in assignments])
-
-        # flow balance constraints for data nodes
-        for i in range(self.n):
-            self.model += sum(self.y[(i, j)] for j in range(self.k)) == 1
-
-        # flow balance constraints for cluster nodes
-        for j in range(self.k):
-            self.model += sum(self.y[(i, j)] for i in range(self.n)) - self.min_size == self.b[j]
             
-        # capacity constraint on outflow of cluster nodes
+        # constraints on the total weights of clusters
         for j in range(self.k):
-            self.model += self.b[j] <= self.max_size - self.min_size 
-
-        # flow balance constraint for the sink node
-        self.model += sum(self.b[j] for j in range(self.k)) == self.n - (self.k * self.min_size)
-
+            self.model += sum([self.weights[i] * self.y[(i, j)] for i in range(self.n)]) >= self.min_weight
+            self.model += sum([self.weights[i] * self.y[(i, j)] for i in range(self.n)]) <= self.max_weight
 
     def solve(self):
         self.status = self.model.solve()
@@ -102,17 +84,17 @@ def compute_centers(clusters, dataset):
             centers[j][i] = centers[j][i]/float(counts[j])
     return clusters, centers
 
-def minsize_kmeans(dataset, k, min_size=0, max_size=None):
+def minsize_kmeans(dataset, k, weights, min_weight, max_weight):
     n = len(dataset)
-    if max_size == None:
-        max_size = n
+    if max_weight == None:
+        max_weight = n
 
     centers = initialize_centers(dataset, k)
     clusters = [-1] * n
 
     converged = False
     while not converged:
-        m = subproblem(centers, data, min_size, max_size)
+        m = subproblem(centers, data, weights, min_weight, max_weight)
         clusters_ = m.solve()
         if not clusters_:
             return None, None
@@ -137,7 +119,14 @@ def read_data(datafile):
                 d = [float(i) for i in line.split()]
                 data.append(d)
     return data
-
+    
+def read_weights(weightfile):
+    weights = []
+    with open(weightfile, 'r') as f:
+        for line in f:
+            weights += [float(i) for i in line.strip().split()]
+    return weights
+    
 def cluster_quality(cluster):
     if len(cluster) == 0:
         return 0.0
@@ -162,27 +151,30 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('datafile', help='file containing the coordinates of instances')
     parser.add_argument('k', help='number of clusters', type=int)
-    parser.add_argument('min_size', help='minimum size of each cluster', type=int)  
-    parser.add_argument('max_size', help='maximum size of each cluster', type=int)      
+    parser.add_argument('weightfile', help='file containing the weights of instances')
+    parser.add_argument('min_weight', help='minimum total weight for each cluster', type=float)
+    parser.add_argument('max_weight', help='maximum total weigth for each cluster', type=float)    
     parser.add_argument('-n', '--NUM_ITER', type=int,
                         help='run the algorithm for NUM_ITER times and return the best clustering',
                         default=1)
     parser.add_argument('-o', '--OUTFILE', help='store the result in OUTFILE',
                         default='')
-    args = parser.parse_args()    
+    args = parser.parse_args()
     
     data = read_data(args.datafile)
+    weights = read_weights(args.weightfile)
 
     best = None
     best_clusters = None
     for i in range(args.NUM_ITER):
-        clusters, centers = minsize_kmeans(data, args.k, 
-                                           args.min_size, args.max_size)
+        clusters, centers = minsize_kmeans(data, args.k, weights, 
+                                           args.min_weight, args.max_weight)
         if clusters:
             quality = compute_quality(data, clusters)
             if not best or (quality < best):
                 best = quality
                 best_clusters = clusters
+    
     if best:
         if args.OUTFILE:
             with open(args.OUTFILE, 'w') as f:

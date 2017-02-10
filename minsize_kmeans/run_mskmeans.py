@@ -3,7 +3,7 @@
 
 import pulp
 import random
-import sys
+import argparse
 
 def l2_distance(point1, point2):
     return sum([(float(i)-float(j))**2 for (i,j) in zip(point1, point2)])
@@ -51,11 +51,11 @@ class subproblem(object):
             self.model += sum(self.y[(i, j)] for j in range(self.k)) == 1
 
         # flow balance constraints for cluster nodes
-        for j in range(k):
+        for j in range(self.k):
             self.model += sum(self.y[(i, j)] for i in range(self.n)) - self.min_size == self.b[j]
 
         # flow balance constraint for the sink node
-        self.model += sum(self.b[j] for j in range(self.k)) == self.n - (self.k * min_size)
+        self.model += sum(self.b[j] for j in range(self.k)) == self.n - (self.k * self.min_size)
 
 
     def solve(self):
@@ -150,29 +150,38 @@ def compute_quality(data, cluster_indices):
     return sum(cluster_quality(c) for c in clusters.values())
 
 if __name__ == '__main__':
-    if len(sys.argv) < 6:
-        print('usage: %s [data file] [k] [minimum size] [#iterations] [result file]'%sys.argv[0])
-        exit(1)
 
-    data = read_data(sys.argv[1])
-    k = int(sys.argv[2])
-    min_size = int(sys.argv[3])
-    iterations = int(sys.argv[4])
-
+    parser = argparse.ArgumentParser()
+    parser.add_argument('datafile', help='file containing the coordinates of instances')
+    parser.add_argument('k', help='number of clusters', type=int)
+    parser.add_argument('min_size', help='minimum size of each cluster', type=int)  
+    parser.add_argument('-n', '--NUM_ITER', type=int,
+                        help='run the algorithm for NUM_ITER times and return the best clustering',
+                        default=1)
+    parser.add_argument('-o', '--OUTFILE', help='store the result in OUTFILE',
+                        default='')
+    args = parser.parse_args()    
+    
+    data = read_data(args.datafile)
+    
     best = None
     best_clusters = None
-    for i in range(iterations):
-        clusters, centers = minsize_kmeans(data, k, min_size)
+    for i in range(args.NUM_ITER):
+        clusters, centers = minsize_kmeans(data, args.k, args.min_size)
         if clusters:
             quality = compute_quality(data, clusters)
             if not best or (quality < best):
                 best = quality
                 best_clusters = clusters
-    
+ 
     if best:
-        with open(sys.argv[5], 'a') as f:
-            print('\n'.join(str(i) for i in clusters), file=f)
+        if args.OUTFILE:
+            with open(args.OUTFILE, 'w') as f:
+                print('\n'.join(str(i) for i in clusters), file=f)
+        else:
+            print('cluster assignments:')
+            for i in range(len(clusters)):
+                print('%d: %d'%(i, clusters[i]))
+        print('sum of squared distances: %.4f'%(best))
     else:
         print('no clustering found')
-
-
