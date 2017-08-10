@@ -44,6 +44,10 @@ class subproblem(object):
         for j in range(self.k):
             self.model += sum([self.weights[i] * self.y[(i, j)] for i in range(self.n)]) >= self.min_weight
             self.model += sum([self.weights[i] * self.y[(i, j)] for i in range(self.n)]) <= self.max_weight
+        
+        # make sure each is assigned at least once, and only once
+        for i in range(self.n):
+            self.model += sum([self.y[(i, j)] for j in range(self.k)]) == 1
 
     def solve(self):
         self.status = self.model.solve()
