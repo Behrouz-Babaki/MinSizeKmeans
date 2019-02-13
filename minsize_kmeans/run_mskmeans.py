@@ -6,7 +6,7 @@ import random
 import argparse
 
 def l2_distance(point1, point2):
-    return sum([(float(i)-float(j))**2 for (i,j) in zip(point1, point2)])
+    return sum((float(i)-float(j))**2 for (i,j) in zip(point1, point2))
 
 class subproblem(object):
     def __init__(self, centroids, data, min_size):
@@ -44,18 +44,18 @@ class subproblem(object):
         self.model = pulp.LpProblem("Model for assignment subproblem", pulp.LpMinimize)
 
         # objective function
-        self.model += sum([distances(assignment) * self.y[assignment] for assignment in assignments])
+        self.model += pulp.lpSum(distances(assignment) * self.y[assignment] for assignment in assignments)
 
         # flow balance constraints for data nodes
         for i in range(self.n):
-            self.model += sum(self.y[(i, j)] for j in range(self.k)) == 1
+            self.model += pulp.lpSum(self.y[(i, j)] for j in range(self.k)) == 1
 
         # flow balance constraints for cluster nodes
         for j in range(self.k):
-            self.model += sum(self.y[(i, j)] for i in range(self.n)) - self.min_size == self.b[j]
+            self.model += pulp.lpSum(self.y[(i, j)] for i in range(self.n)) - self.min_size == self.b[j]
 
         # flow balance constraint for the sink node
-        self.model += sum(self.b[j] for j in range(self.k)) == self.n - (self.k * self.min_size)
+        self.model += pulp.lpSum(self.b[j] for j in range(self.k)) == self.n - (self.k * self.min_size)
 
 
     def solve(self):
