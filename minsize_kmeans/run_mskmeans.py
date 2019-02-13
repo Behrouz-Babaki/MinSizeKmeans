@@ -104,7 +104,7 @@ def minsize_kmeans(dataset, k, min_size=0):
 
     converged = False
     while not converged:
-        m = subproblem(centers, data, min_size)
+        m = subproblem(centers, dataset, min_size)
         clusters_ = m.solve()
         if not clusters_:
             return None, None
