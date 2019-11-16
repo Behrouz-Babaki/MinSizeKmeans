@@ -177,11 +177,11 @@ if __name__ == '__main__':
     if best:
         if args.OUTFILE:
             with open(args.OUTFILE, 'w') as f:
-                print('\n'.join(str(i) for i in clusters), file=f)
+                print('\n'.join(str(i) for i in best_clusters), file=f)
         else:
             print('cluster assignments:')
-            for i in range(len(clusters)):
-                print('%d: %d'%(i, clusters[i]))
+            for i in range(len(best_clusters)):
+                print('%d: %d'%(i, best_clusters[i]))
         print('sum of squared distances: %.4f'%(best))
     else:
         print('no clustering found')
