@@ -33,7 +33,7 @@ optional arguments:
 To see a run of algorithm on example data, run the script `example_run.sh` in `minsize_kmeans` directory.
 
 ## Dependencies
-This program uses [Pulp](https://pythonhosted.org/PuLP/) to solve the *assignment subproblem*. 
+This program uses [Pulp](https://pypi.org/project/PuLP/) to solve the *assignment subproblem*. 
 You should also have a MIP solver (Gurobi, Cplex, Cbc, etc.) installed and have it configured to work with Pulp.
 
 ## Extension
